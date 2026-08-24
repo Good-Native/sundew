@@ -1,0 +1,243 @@
+const NEW_VALUE = "__new__";
+
+// Hosted Google Picker page (Cloudflare Pages) — see README.
+const PICKER_URL = "https://sundew-picker.harvey-1c7.workers.dev/";
+
+const els = {};
+for (const id of [
+  "signInButton",
+  "authState",
+  "spreadsheetSelect",
+  "browseDriveButton",
+  "newSheetWrap",
+  "newSheetName",
+  "createSheetButton",
+  "openSheetLink",
+  "tabSelect",
+  "newTabWrap",
+  "newTabName",
+  "deviceLabel",
+  "intervalSelect",
+  "saveButton",
+  "syncNowButton",
+  "status",
+]) {
+  els[id] = document.getElementById(id);
+}
+
+function setStatus(message, ok) {
+  els.status.textContent = message;
+  els.status.className = ok === undefined ? "" : ok ? "ok" : "error";
+}
+
+function addOption(select, value, label) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  select.appendChild(option);
+}
+
+async function checkAuth() {
+  try {
+    await getToken(false);
+    els.authState.textContent = "Signed in";
+    return true;
+  } catch (e) {
+    els.authState.textContent = "Not signed in";
+    return false;
+  }
+}
+
+async function loadSpreadsheets(selectId) {
+  try {
+    const files = await listAppSpreadsheets();
+    els.spreadsheetSelect.replaceChildren();
+    addOption(els.spreadsheetSelect, "", "— select —");
+    for (const file of files) {
+      addOption(els.spreadsheetSelect, file.id, file.name);
+    }
+    addOption(els.spreadsheetSelect, NEW_VALUE, "+ Create new spreadsheet…");
+    els.spreadsheetSelect.disabled = false;
+
+    if (
+      selectId &&
+      [...els.spreadsheetSelect.options].some((o) => o.value === selectId)
+    ) {
+      els.spreadsheetSelect.value = selectId;
+    }
+    await onSpreadsheetChange();
+  } catch (err) {
+    setStatus(`Could not list spreadsheets: ${err.message}`, false);
+  }
+}
+
+async function onSpreadsheetChange() {
+  const value = els.spreadsheetSelect.value;
+  els.newSheetWrap.classList.toggle("hidden", value !== NEW_VALUE);
+  els.openSheetLink.classList.toggle("hidden", !value || value === NEW_VALUE);
+
+  els.tabSelect.replaceChildren();
+  els.tabSelect.disabled = true;
+
+  if (!value || value === NEW_VALUE) {
+    addOption(els.tabSelect, "", "Select a spreadsheet first");
+    return;
+  }
+
+  els.openSheetLink.href = `https://docs.google.com/spreadsheets/d/${value}`;
+  await loadTabs(value);
+}
+
+async function loadTabs(spreadsheetId) {
+  setStatus("Loading tabs…");
+  try {
+    const meta = await getSpreadsheetMeta(spreadsheetId);
+    els.tabSelect.replaceChildren();
+    for (const sheet of meta.sheets) {
+      addOption(els.tabSelect, sheet.properties.title, sheet.properties.title);
+    }
+    addOption(els.tabSelect, NEW_VALUE, "+ Create new tab…");
+    els.tabSelect.disabled = false;
+
+    const saved = await chrome.storage.sync.get(["spreadsheetId", "sheetName"]);
+    if (
+      saved.spreadsheetId === spreadsheetId &&
+      saved.sheetName &&
+      [...els.tabSelect.options].some((o) => o.value === saved.sheetName)
+    ) {
+      els.tabSelect.value = saved.sheetName;
+    }
+    onTabSelectChange();
+    setStatus("");
+  } catch (err) {
+    setStatus(`Could not load tabs: ${err.message}`, false);
+  }
+}
+
+function onTabSelectChange() {
+  els.newTabWrap.classList.toggle("hidden", els.tabSelect.value !== NEW_VALUE);
+}
+
+async function createSheet() {
+  const title = els.newSheetName.value.trim();
+  if (!title) {
+    setStatus("Enter a name for the new spreadsheet.", false);
+    return;
+  }
+  setStatus("Creating spreadsheet…");
+  try {
+    const created = await createSpreadsheet(title, true);
+    setStatus(`Created "${title}".`, true);
+    await loadSpreadsheets(created.spreadsheetId);
+  } catch (err) {
+    setStatus(`Create failed: ${err.message}`, false);
+  }
+}
+
+function selectedSheetName() {
+  if (els.tabSelect.value === NEW_VALUE) {
+    return els.newTabName.value.trim();
+  }
+  return els.tabSelect.value;
+}
+
+async function save() {
+  const spreadsheetId = els.spreadsheetSelect.value;
+  const sheetName = selectedSheetName();
+  if (!spreadsheetId || spreadsheetId === NEW_VALUE || !sheetName) {
+    setStatus("Spreadsheet and tab are both required.", false);
+    return;
+  }
+  await chrome.storage.sync.set({
+    spreadsheetId,
+    sheetName,
+    deviceLabel: els.deviceLabel.value.trim() || "Chrome",
+    intervalMinutes: Number(els.intervalSelect.value),
+  });
+  await chrome.runtime.sendMessage({ type: "rescheduleAlarm" });
+  setStatus("Saved.", true);
+}
+
+async function syncNow() {
+  setStatus("Syncing…");
+  const result = await chrome.runtime.sendMessage({ type: "syncNow" });
+  if (result?.ok) {
+    setStatus(`Synced — ${result.rowsPushed} row(s) pushed.`, true);
+  } else {
+    setStatus(`Sync failed: ${result?.error || "unknown error"}`, false);
+  }
+}
+
+async function restore() {
+  const config = await chrome.storage.sync.get([
+    "spreadsheetId",
+    "deviceLabel",
+    "intervalMinutes",
+  ]);
+  if (config.deviceLabel) els.deviceLabel.value = config.deviceLabel;
+  if (config.intervalMinutes) {
+    els.intervalSelect.value = String(config.intervalMinutes);
+  }
+
+  const signedIn = await checkAuth();
+  if (signedIn) {
+    await loadSpreadsheets(config.spreadsheetId);
+  }
+}
+
+els.signInButton.addEventListener("click", async () => {
+  try {
+    await getToken(true);
+    await checkAuth();
+    const { spreadsheetId } = await chrome.storage.sync.get("spreadsheetId");
+    await loadSpreadsheets(spreadsheetId);
+    setStatus("Signed in.", true);
+  } catch (err) {
+    setStatus(`Sign-in failed: ${err.message}`, false);
+  }
+});
+async function browseDrive() {
+  try {
+    const token = await getToken(true);
+    const fragment = new URLSearchParams({
+      token,
+      origin: location.origin,
+    });
+    window.open(
+      `${PICKER_URL}#${fragment}`,
+      "sheetPicker",
+      "width=1050,height=650",
+    );
+    setStatus("Pick a spreadsheet in the popup…");
+  } catch (err) {
+    setStatus(`Sign-in required: ${err.message}`, false);
+  }
+}
+
+window.addEventListener("message", async (event) => {
+  if (event.origin !== new URL(PICKER_URL).origin) return;
+  if (event.data?.type !== "sheet-picked") return;
+
+  const { id, name } = event.data;
+  if (![...els.spreadsheetSelect.options].some((o) => o.value === id)) {
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = name;
+    const newEntry = [...els.spreadsheetSelect.options].find(
+      (o) => o.value === NEW_VALUE,
+    );
+    els.spreadsheetSelect.insertBefore(option, newEntry || null);
+  }
+  els.spreadsheetSelect.value = id;
+  await onSpreadsheetChange();
+  setStatus(`Connected "${name}".`, true);
+});
+
+els.spreadsheetSelect.addEventListener("change", onSpreadsheetChange);
+els.browseDriveButton.addEventListener("click", browseDrive);
+els.createSheetButton.addEventListener("click", createSheet);
+els.tabSelect.addEventListener("change", onTabSelectChange);
+els.saveButton.addEventListener("click", save);
+els.syncNowButton.addEventListener("click", syncNow);
+
+restore();

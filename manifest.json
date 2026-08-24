@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Sundew",
+  "version": "1.0.0",
+  "description": "Quietly captures Chrome browsing history into a Google Sheet on an hourly schedule.",
+  "permissions": ["history", "alarms", "storage", "identity"],
+  "host_permissions": [
+    "https://sheets.googleapis.com/",
+    "https://www.googleapis.com/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "oauth2": {
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/drive.file"]
+  }
+}

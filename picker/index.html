@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Select a spreadsheet</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        padding: 24px;
+        color: #222;
+      }
+      #message {
+        font-size: 14px;
+      }
+      .error {
+        color: #b42318;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message">Loading Google Picker…</div>
+    <script>
+      // Fill these in from the same GCP project as the extension's OAuth client.
+      const API_KEY = "YOUR_API_KEY"; // API key restricted to Google Picker API + this domain
+      const APP_ID = "YOUR_PROJECT_NUMBER"; // numeric GCP project number
+
+      const params = new URLSearchParams(location.hash.slice(1));
+      const token = params.get("token");
+      const returnOrigin = params.get("origin");
+
+      function fail(text) {
+        const el = document.getElementById("message");
+        el.textContent = text;
+        el.className = "error";
+      }
+
+      function onApiLoad() {
+        gapi.load("picker", createPicker);
+      }
+
+      function createPicker() {
+        if (
+          !token ||
+          !returnOrigin ||
+          !returnOrigin.startsWith("chrome-extension://")
+        ) {
+          fail(
+            "Missing auth context — open this page from the extension’s Options.",
+          );
+          return;
+        }
+        const view = new google.picker.DocsView(
+          google.picker.ViewId.SPREADSHEETS,
+        ).setIncludeFolders(true);
+        const picker = new google.picker.PickerBuilder()
+          .setOAuthToken(token)
+          .setDeveloperKey(API_KEY)
+          .setAppId(APP_ID)
+          .addView(view)
+          .setTitle("Select a spreadsheet for history sync")
+          .setCallback(onPicked)
+          .build();
+        picker.setVisible(true);
+        document.getElementById("message").textContent =
+          "Pick the spreadsheet to sync history into.";
+      }
+
+      function onPicked(data) {
+        if (data.action === google.picker.Action.PICKED) {
+          const doc = data.docs[0];
+          if (window.opener) {
+            window.opener.postMessage(
+              { type: "sheet-picked", id: doc.id, name: doc.name },
+              returnOrigin,
+            );
+          }
+          window.close();
+        } else if (data.action === google.picker.Action.CANCEL) {
+          window.close();
+        }
+      }
+    </script>
+    <script
+      src="https://apis.google.com/js/api.js"
+      onload="onApiLoad()"
+    ></script>
+  </body>
+</html>
