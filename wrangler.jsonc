@@ -1,11 +1,9 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "history-sheets-sync",
-  "compatibility_date": "2026-08-20",
-  "observability": {
-    "enabled": true
-  },
+  // Static Google Picker page — see README "Picker page".
+  // Deploys the picker/ directory as Worker assets (no Worker script).
+  "name": "sundew-picker",
+  "compatibility_date": "2026-08-01",
   "assets": {
-    "directory": "picker"
+    "directory": "./picker"
   }
 }
