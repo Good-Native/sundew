@@ -30,13 +30,15 @@ Project operating guide for Claude Code in this repository.
 
 ## Workflow
 
-- Every PR to `main` must add an entry under `## [Unreleased]` in
-  CHANGELOG.md (`[Unreleased:minor]` / `[Unreleased:major]` to control
-  the bump). CI enforces this; `no-release` label skips the release.
-- Merges to `main` auto-release: version bump in `manifest.json`, tag,
-  GitHub release with a packed extension zip attached.
-- `picker/` or `wrangler.jsonc` changes on `main` auto-deploy to
-  Cloudflare via `deploy-picker.yml`.
+- Never edit CHANGELOG.md — it is generated. Every code PR adds one
+  fragment file in `changelog.d/` (see its README; `bump:` frontmatter
+  controls the release type). CI enforces this; `no-changelog` label
+  skips the fragment requirement, `no-release` skips the release.
+- Merges to `main` auto-release: fragments collated into CHANGELOG.md,
+  version bump in `manifest.json`, tag, GitHub release with a packed
+  extension zip attached.
+- The picker page deploys via Cloudflare's native GitHub integration
+  (Workers Builds) on push to `main` — no deploy workflow in this repo.
 - Test locally by loading the repo root as an unpacked extension and
   using **Sync now** in the popup/options; there is no test suite.
 

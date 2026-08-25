@@ -40,10 +40,10 @@ Already deployed to `https://sundew-picker.harvey-1c7.workers.dev` (`PICKER_URL`
 
 1. In the GCP project: **Credentials → Create credentials → API key** → restrict it to the **Google Picker API** and to HTTP referrers matching `https://sundew-picker.harvey-1c7.workers.dev/*`.
 2. Fill in `picker/index.html`: `API_KEY` (the key from step 1) and `APP_ID` (the numeric **project number** from the GCP dashboard — must be the same project as the OAuth client, or picked files won't be granted to the extension).
-3. Redeploy:
+3. Redeploy — push to `main` (Cloudflare's Workers Builds GitHub integration deploys `wrangler.jsonc` automatically), or manually:
 
 ```bash
-npx wrangler pages deploy picker --project-name sundew-picker
+npx wrangler deploy
 ```
 
 ### 4. Configure

@@ -1,24 +1,12 @@
 name: Changelog Check
 
-# All ${{ }} expressions are surfaced through env: vars before being read in
-# run: blocks (or referenced via process.env in github-script), so untrusted
-# changelog content can't break out of the shell or the JS context.
+# Ported from Good-Native/bloom (changelog.d fragment convention),
+# trimmed to a single main branch.
 
 on:
   pull_request:
     branches:
       - main
-    # `paths` (not `paths-ignore`) so negation is supported. Run on
-    # every change, then exclude docs/license/markdown, then re-include
-    # CHANGELOG.md so a changelog-only PR still triggers the gate.
-    paths:
-      - "**"
-      - "!**/*.md"
-      - "!docs/**"
-      - "!LICENSE"
-      - "!.gitignore"
-      - "!SECURITY.md"
-      - "CHANGELOG.md"
 
 jobs:
   check-changelog:
@@ -29,101 +17,124 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
 
-      - name: Check for changelog updates
-        id: check
+      - name: Classify changed files
+        id: changes
         env:
-          COMPARE_REF: origin/main
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          if ! grep -q "^## \[Unreleased" CHANGELOG.md; then
-            echo "::error::No [Unreleased] section found in CHANGELOG.md"
+          CODE=$(git diff --name-only "origin/$BASE_REF...HEAD" \
+            | grep -vE '(\.md$|^docs/|^LICENSE$|^\.gitignore$|^\.gitattributes$|^\.github/)' || true)
+
+          if [ -z "$CODE" ]; then
+            echo "code_changed=false" >> $GITHUB_OUTPUT
+            echo "Docs/config only — the fragment requirement does not apply."
+          else
+            echo "code_changed=true" >> $GITHUB_OUTPUT
+            echo "Code changed:"
+            echo "$CODE"
+          fi
+
+      - name: Require a changelog fragment
+        if: steps.changes.outputs.code_changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'no-changelog')
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          ADDED=$(git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" -- 'changelog.d/*' \
+            | grep -vE '^changelog\.d/(README\.md|\.gitkeep)$' || true)
+
+          if [ -z "$ADDED" ]; then
+            echo "❌ ERROR: this PR adds no changelog fragment"
             echo ""
-            echo "Please add a changelog entry for your changes:"
-            echo "  ## [Unreleased]          → for patch releases"
-            echo "  ## [Unreleased:minor]    → for minor releases"
-            echo "  ## [Unreleased:major]    → for major releases"
+            echo "Add one file: changelog.d/<branch-slug>.md"
+            echo "  ---"
+            echo "  bump: patch"
+            echo "  ---"
+            echo ""
+            echo "  ### Fixed"
+            echo ""
+            echo "  - What changed."
+            echo ""
+            echo "See changelog.d/README.md. Add the 'no-changelog' label to skip this check."
             exit 1
           fi
 
-          if ! grep -q "^## Full changelog history$" CHANGELOG.md; then
-            echo "::error::No permanent history marker found in CHANGELOG.md"
-            echo ""
-            echo "Expected this heading between the unreleased section and version history:"
-            echo "  ## Full changelog history"
-            exit 1
+          echo "✅ Changelog fragment added:"
+          echo "$ADDED"
+
+      - name: Validate fragments and compute release preview
+        id: check
+        run: |
+          FILES=$(node .github/workflows/scripts/changelog.mjs collect --files)
+          if [ -z "$FILES" ]; then
+            echo "has_fragments=false" >> $GITHUB_OUTPUT
+            echo "No pending fragments — merge will not cut a release."
+            exit 0
+          fi
+          echo "has_fragments=true" >> $GITHUB_OUTPUT
+
+          RELEASE_TYPE=$(node .github/workflows/scripts/changelog.mjs collect --bump)
+          echo "release_type=$RELEASE_TYPE" >> $GITHUB_OUTPUT
+
+          CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          CURRENT_VERSION=${CURRENT_TAG#v}
+          CURRENT_VERSION=${CURRENT_VERSION%%-*}
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          if [ "$RELEASE_TYPE" = "major" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "$RELEASE_TYPE" = "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
           fi
 
-          # PR-level enforcement: every PR must add new content under
-          # [Unreleased]. Compare the unreleased section between
-          # origin/main and HEAD; if they're identical, the PR didn't
-          # add anything and is rejected. Catches the failure mode where
-          # [Unreleased] is non-empty (because previous PRs accumulated
-          # entries) but the current PR forgot to add one.
-          extract_unreleased() {
-            awk '
-              /^## \[Unreleased/ {f=1; next}
-              /^## Full changelog history$/ {f=0}
-              /^## \[[0-9]/ {f=0}
-              f
-            ' "$1" | sed '/^_Add unreleased changes here\._$/d' | sed '/^[[:space:]]*$/d'
-          }
-
-          MAIN_UNRELEASED=$(git show "$COMPARE_REF":CHANGELOG.md 2>/dev/null | extract_unreleased /dev/stdin || true)
-          HEAD_UNRELEASED=$(extract_unreleased CHANGELOG.md)
-
-          if [ "$MAIN_UNRELEASED" = "$HEAD_UNRELEASED" ]; then
-            echo "::error::This PR did not add any new entry under ## [Unreleased]."
-            echo ""
-            echo "Every PR to main must add at least one line under ## [Unreleased]"
-            echo "in CHANGELOG.md describing the change. For example:"
-            echo ""
-            echo "  ## [Unreleased]"
-            echo ""
-            echo "  ### Changed"
-            echo "  - Brief description of the change."
-            echo ""
-            echo "If your change really does not warrant a changelog entry, justify"
-            echo "it explicitly in the PR description and apply the 'no-release'"
-            echo "label to skip the auto-release on merge."
-            exit 1
-          fi
-
-          bash .github/scripts/changelog-version.sh
-
-          echo "Changelog has new content under [Unreleased]"
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "next_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version will be: $NEW_VERSION"
 
       - name: Comment on PR with version info
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
           RELEASE_TYPE: ${{ steps.check.outputs.release_type }}
-          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
           NEXT_VERSION: ${{ steps.check.outputs.next_version }}
-          CHANGELOG_CONTENT: ${{ steps.check.outputs.changelog_content }}
+          HAS_FRAGMENTS: ${{ steps.check.outputs.has_fragments }}
         with:
           script: |
             const releaseType = process.env.RELEASE_TYPE;
-            const currentVersion = process.env.CURRENT_VERSION;
             const nextVersion = process.env.NEXT_VERSION;
-            const changelogContent = (process.env.CHANGELOG_CONTENT || '').trim();
+            const hasFragments = process.env.HAS_FRAGMENTS === 'true';
 
-            // Hidden marker so the bot only edits its own comment (not
-            // any other bot whose body happens to mention "Release
-            // Preview").
-            const MARKER = '<!-- changelog-check-release-preview -->';
+            const body = !hasFragments
+              ? `## 🏷️ Release Preview
 
-            const lines = [
-              MARKER,
-              `# Release Preview`,
-              ``,
-              `**${releaseType}**: \`${currentVersion}\` → \`${nextVersion}\``,
-            ];
-            if (changelogContent) {
-              lines.push(``, `# Changelog`, ``, changelogContent);
-            }
-            const body = lines.join('\n');
+            No pending changelog fragments — merging this PR will not create a release.`
+              : `## 🏷️ Release Preview
+
+            When this PR is merged, it will automatically create:
+
+            - **Version:** \`${nextVersion}\` (${releaseType} release)
+            - **Tag:** \`${nextVersion}\`
+            - **GitHub Release:** with changelog content and the packed extension zip
+
+            The changelog will be assembled from \`changelog.d/\` automatically.
+
+            ---
+
+            💡 **Tips:**
+            - Set \`bump:\` in your fragment's frontmatter to control release type — the release takes the highest bump across all pending fragments:
+              - \`bump: patch\` → patch release (default)
+              - \`bump: minor\` → minor release
+              - \`bump: major\` → major release
+            - Add \`no-changelog\` label to skip the fragment requirement (e.g., for docs-only changes)
+            - Add \`no-release\` label to skip release creation`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -133,7 +144,7 @@ jobs:
 
             const botComment = comments.find(comment =>
               comment.user.type === 'Bot' &&
-              comment.body.includes(MARKER)
+              comment.body.includes('🏷️ Release Preview')
             );
 
             if (botComment) {
@@ -141,13 +152,13 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
-                body
+                body: body
               });
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body
+                body: body
               });
             }
