@@ -1,7 +1,7 @@
 {
   // Static Google Picker page — see README "Picker page".
   // Deploys the picker/ directory as Worker assets (no Worker script).
-  "name": "sundew-picker",
+  "name": "sundew",
   "compatibility_date": "2026-08-01",
   "assets": {
     "directory": "./picker"
