@@ -12,6 +12,12 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.2.5] – 2026-08-25
+
+### Fixed
+
+- Inter was bundled as the weight-100 file declared for all weights, rendering everything hairline; now ships proper 400/500/600/700 files.
+
 ## [1.2.4] – 2026-08-25
 
 ### Changed
