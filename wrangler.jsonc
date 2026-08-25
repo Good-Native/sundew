@@ -5,5 +5,7 @@
   "compatibility_date": "2026-08-01",
   "assets": {
     "directory": "./picker"
-  }
+  },
+  // Custom domain — wrangler attaches it on deploy (zone must be in the account).
+  "routes": [{ "pattern": "app.sundew.goodnative.co", "custom_domain": true }]
 }

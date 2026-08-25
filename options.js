@@ -1,7 +1,7 @@
 const NEW_VALUE = "__new__";
 
 // Hosted Google Picker page (Cloudflare Pages) — see README.
-const PICKER_URL = "https://sundew-picker.harvey-1c7.workers.dev/";
+const PICKER_URL = "https://app.sundew.goodnative.co/";
 
 const els = {};
 for (const id of [
