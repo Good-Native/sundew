@@ -21,7 +21,7 @@ Colours: red `#990B27`, amber `#F6A605`, dark `#280407`. Source assets (wordmark
 - Auth uses the non-sensitive `drive.file` scope, so no Google app verification is needed and users in any org can sign in without warnings. The extension can touch spreadsheets it created **or** ones the user explicitly picks: **Browse Drive…** in Options opens a small hosted Google Picker page, and picking a file grants the extension access to just that file.
 - The Picker can't run inside an MV3 extension page (remote-script CSP), which is why it lives on a tiny static Cloudflare Pages site (`picker/index.html`). The extension passes its OAuth token to the page via URL fragment; the page posts the picked file's id/name back via `postMessage` and closes.
 
-Columns: `isoTime, date, time, title, url, transition, visitId, visitCount, typedCount, device`.
+Columns: `Timestamp (ISO), Date, Time, Page Title, URL, Visit Type, Visit ID, Total Visits, Typed Count, Device, Referred By (Visit ID), Local Visit`. That is every field Chrome's history API exposes per visit; `Referred By` chains visits into navigation trails, and `Local Visit` is FALSE for visits synced into Chrome from another device. Header renames rewrite row 1 in place on next sync; column order never changes.
 
 ## Setup
 

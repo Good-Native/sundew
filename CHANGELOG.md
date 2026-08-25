@@ -12,6 +12,16 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.3.0] – 2026-08-25
+
+### Added
+
+- Two new sheet columns: "Referred By (Visit ID)" (navigation trail) and "Local Visit" (FALSE when the visit synced in from another device) — the last remaining fields Chrome exposes per visit.
+
+### Changed
+
+- Sheet headers renamed to human-friendly names (e.g. "Page Title", "Visit Type"); existing tabs get row 1 rewritten in place on next sync, column order unchanged.
+
 ## [1.2.6] – 2026-08-25
 
 ### Changed

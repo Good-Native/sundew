@@ -110,6 +110,8 @@ async function collectVisits(since, seen) {
           visitId: visit.visitId,
           visitTime: visit.visitTime,
           transition: visit.transition,
+          referringVisitId: visit.referringVisitId,
+          isLocal: visit.isLocal,
           title: item.title || "",
           url: item.url,
           visitCount: item.visitCount,
@@ -137,6 +139,9 @@ function visitToRow(visit, deviceLabel) {
     visit.visitCount,
     visit.typedCount,
     deviceLabel,
+    // "0" means no referrer (address bar, bookmark, etc.)
+    visit.referringVisitId ?? "",
+    visit.isLocal === undefined ? "" : visit.isLocal ? "TRUE" : "FALSE",
   ];
 }
 

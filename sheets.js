@@ -3,17 +3,21 @@
 const SHEETS_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files";
 
+// Order matters: existing rows were written in this order, so renames are
+// in-place and new columns append at the end only.
 const HEADER = [
-  "isoTime",
-  "date",
-  "time",
-  "title",
-  "url",
-  "transition",
-  "visitId",
-  "visitCount",
-  "typedCount",
-  "device",
+  "Timestamp (ISO)",
+  "Date",
+  "Time",
+  "Page Title",
+  "URL",
+  "Visit Type",
+  "Visit ID",
+  "Total Visits",
+  "Typed Count",
+  "Device",
+  "Referred By (Visit ID)",
+  "Local Visit",
 ];
 
 function getToken(interactive) {
@@ -127,7 +131,10 @@ async function ensureHeader(spreadsheetId, sheetName) {
     `A1:${String.fromCharCode(64 + HEADER.length)}1`,
   );
   const existing = await sheetsFetch(`/${spreadsheetId}/values/${range}`);
-  if (!existing.values || existing.values.length === 0) {
+  const current = existing.values?.[0] || [];
+  // Write when missing, and rewrite when it differs (e.g. old column
+  // names) — column order never changes, so data rows stay aligned.
+  if (HEADER.some((name, i) => current[i] !== name)) {
     await sheetsFetch(
       `/${spreadsheetId}/values/${range}?valueInputOption=RAW`,
       {
