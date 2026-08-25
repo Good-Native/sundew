@@ -1,37 +1,15 @@
-/* Sundew shared UI — Chrome-native feel (Material 3-ish tokens, system
-   font, pill buttons, Google greys) with the Sundew brand as accent. */
+/* Sundew shared UI — Chrome-native structure (system font, pill buttons,
+   Material-style focus) in the strict brand palette: red, amber, white. */
 
 :root {
-  /* Brand */
-  --sundew-red: #990b27;
-  --sundew-red-hover: #7d0920;
-  --sundew-amber: #f6a605;
-  --sundew-dark: #280407;
+  --red: #990b27;
+  --amber: #f6a605;
+  --white: #ffffff;
 
-  /* Chrome-flavoured neutrals (light) */
-  --bg: #ffffff;
-  --surface: #f8f9fa;
-  --border: #dadce0;
-  --text: #202124;
-  --text-secondary: #5f6368;
-  --ok: #188038;
-  --error: #d93025;
-  --focus-ring: rgba(153, 11, 39, 0.4);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #292a2d;
-    --surface: #202124;
-    --border: #5f6368;
-    --text: #e8eaed;
-    --text-secondary: #9aa0a6;
-    --ok: #81c995;
-    --error: #f28b82;
-    --sundew-red: #e0526e;
-    --sundew-red-hover: #e9718a;
-    --focus-ring: rgba(224, 82, 110, 0.5);
-  }
+  --red-soft: rgba(153, 11, 39, 0.65); /* hints/secondary text */
+  --red-faint: rgba(153, 11, 39, 0.25); /* borders */
+  --red-wash: rgba(153, 11, 39, 0.05); /* surfaces */
+  --amber-wash: rgba(246, 166, 5, 0.15); /* hover */
 }
 
 * {
@@ -46,8 +24,8 @@ body {
     Roboto,
     sans-serif;
   font-size: 13px;
-  color: var(--text);
-  background: var(--bg);
+  color: var(--red);
+  background: var(--white);
   margin: 0;
 }
 
@@ -62,93 +40,109 @@ body {
   display: block;
 }
 
+h1 {
+  color: var(--red);
+}
+
 button {
   font: inherit;
   font-weight: 500;
   border-radius: 100px;
   padding: 7px 16px;
   cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--sundew-red);
+  border: 1px solid var(--red-faint);
+  background: var(--white);
+  color: var(--red);
   transition: background 0.15s;
 }
 
 button:hover {
-  background: var(--surface);
+  background: var(--amber-wash);
 }
 
 button.primary {
-  background: var(--sundew-red);
-  border-color: var(--sundew-red);
-  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--white);
 }
 
 button.primary:hover {
-  background: var(--sundew-red-hover);
-  border-color: var(--sundew-red-hover);
+  background: #7d0920;
+  border-color: #7d0920;
 }
 
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
 
 input[type="text"],
 select {
   font: inherit;
-  color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--border);
+  color: var(--red);
+  background: var(--white);
+  border: 1px solid var(--red-faint);
   border-radius: 8px;
   padding: 7px 10px;
   width: 100%;
+}
+
+input::placeholder {
+  color: var(--red-soft);
+  opacity: 0.6;
 }
 
 label {
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--red-soft);
   margin: 12px 0 4px;
 }
 
 fieldset {
-  border: 1px solid var(--border);
+  border: 1px solid var(--red-faint);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--red-wash);
   margin: 0 0 16px;
   padding: 14px 16px 16px;
 }
 
 legend {
   font-weight: 500;
-  color: var(--text);
+  color: var(--red);
   padding: 0 6px;
 }
 
 a {
-  color: var(--sundew-red);
-  text-decoration: none;
+  color: var(--red);
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+  text-decoration-thickness: 2px;
 }
 
 a:hover {
-  text-decoration: underline;
+  background: var(--amber-wash);
 }
 
 .hint {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--red-soft);
 }
 
 .ok {
-  color: var(--ok);
+  color: var(--red);
+  font-weight: 500;
 }
 
 .error {
-  color: var(--error);
+  color: var(--red);
+  background: var(--amber);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: inline-block;
 }
 
 .hidden {

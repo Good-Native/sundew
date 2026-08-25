@@ -12,6 +12,12 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.1.1] – 2026-08-25
+
+### Changed
+
+- UI locked to the strict brand palette (red `#990B27`, amber `#F6A605`, white); dark-mode colour substitutions removed.
+
 ## [1.1.0] – 2026-08-25
 
 ### Added
