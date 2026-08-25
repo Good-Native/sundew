@@ -8,16 +8,17 @@ async function render() {
     "sheetName",
   ]);
   if (config.sheetName) {
-    destinationEl.textContent = "Sync to: ";
+    destinationEl.textContent = "Sync to:";
     const label = `${config.spreadsheetName || "sheet"} [${config.sheetName}]`;
     if (config.spreadsheetId) {
       const link = document.createElement("a");
       link.href = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}`;
       link.target = "_blank";
+      link.className = "sheet-button";
       link.textContent = label;
       destinationEl.appendChild(link);
     } else {
-      destinationEl.textContent += label;
+      destinationEl.textContent += ` ${label}`;
     }
   }
 
