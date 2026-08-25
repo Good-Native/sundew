@@ -24,7 +24,8 @@ Project operating guide for Claude Code in this repository.
 - Google APIs: Sheets v4 + Drive v3 under the `drive.file` scope only.
   Widening scope reintroduces Google app verification — don't.
 - Picker page (`picker/index.html`) is a standalone static page deployed
-  to Cloudflare Workers (`wrangler.jsonc`, name `sundew-picker`). It is
+  to Cloudflare Workers (`wrangler.jsonc`, name `sundew`, domain
+  `app.sundew.goodnative.co`). It is
   the only place remote scripts are allowed; MV3 CSP forbids them in
   extension pages.
 
