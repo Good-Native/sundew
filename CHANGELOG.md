@@ -12,6 +12,13 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.2.3] – 2026-08-25
+
+### Changed
+
+- Yellow-on-red wordmark in the popup and options; popup background is amber.
+- Body font is Inter (bundled variable woff2 in the extension, Google Fonts on the picker page).
+
 ## [1.2.2] – 2026-08-25
 
 ### Changed

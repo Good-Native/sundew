@@ -186,6 +186,7 @@ jobs:
             manifest.json background.js sheets.js \
             options.html options.js popup.html popup.js \
             sundew.css icons/icon.svg icons/wordmark.svg icons/wordmark-on-amber.svg \
+            icons/wordmark-yellow-on-red.svg fonts/inter-var-latin.woff2 \
             icons/icon-16.png icons/icon-32.png icons/icon-48.png icons/icon-128.png
 
       - name: Extract changelog content

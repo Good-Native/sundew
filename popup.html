@@ -7,12 +7,25 @@
       body {
         width: 280px;
         padding: 16px;
+        background: var(--amber);
       }
       .brand {
         margin-bottom: 12px;
       }
       .brand img {
         height: 28px;
+      }
+      button {
+        background: var(--white);
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.7);
+      }
+      button.primary {
+        background: var(--red);
+      }
+      button.primary:hover {
+        background: #7d0920;
       }
       #destination {
         margin-bottom: 4px;
@@ -29,7 +42,7 @@
   </head>
   <body>
     <div class="brand">
-      <img src="icons/wordmark.svg" alt="sundew" />
+      <img src="icons/wordmark-yellow-on-red.svg" alt="sundew" />
     </div>
     <div id="destination" class="hint">Not configured</div>
     <div id="lastResult"></div>
