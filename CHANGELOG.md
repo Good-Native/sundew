@@ -12,6 +12,12 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.2.4] – 2026-08-25
+
+### Changed
+
+- Wordmark back to red-on-yellow in the popup and options.
+
 ## [1.2.3] – 2026-08-25
 
 ### Changed
