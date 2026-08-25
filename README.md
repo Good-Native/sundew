@@ -24,7 +24,7 @@ Columns: `isoTime, date, time, title, url, transition, visitId, visitCount, type
 ### 1. Load the extension
 
 1. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select this folder.
-2. Copy the extension **ID** shown on the card.
+2. The ID is pinned to `diajjpmjfbkeecomlookgjepfoibobac` on every machine via the `key` in `manifest.json` (private key: 1Password → Good Native → `sundew-google`).
 
 ### 2. Create the OAuth client (one-off, per GCP project)
 
