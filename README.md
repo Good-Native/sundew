@@ -6,7 +6,7 @@ Chrome extension that pushes browsing history to a Google Sheet on a schedule (d
 
 Sundews (_Drosera_) are Australian native carnivorous plants that passively and continuously capture whatever lands on them — no chasing, no effort, just quiet accumulation. That's this app: it sits in the background and captures your browsing trail as it happens, rather than requiring a manual export.
 
-Follows the Good Native convention of Australian native flora/fauna with a functional nod — alongside [mopoke](https://github.com/Good-Native/mopoke) (the owl that watches DNS), [currawong](https://github.com/Good-Native/currawong) (GTM sync), [paperbark](https://github.com/Good-Native/paperbark) (log capture), and [hover](https://github.com/Good-Native/hover) (link checking). Shortlisted alternatives: lyrebird (records and reproduces what it hears), bowerbird (collects and arranges), platypus (senses every movement in the stream), meander (a river's wandering path and the record of it).
+Follows the Good Native convention of Australian native flora/fauna with a functional nod — alongside [mopoke](https://github.com/Good-Native/mopoke) (the owl that watches DNS), [currawong](https://github.com/Good-Native/currawong) (GTM sync), [paperbark](https://github.com/Good-Native/paperbark) (log capture), and [hover](https://github.com/Good-Native/hover) (link checking).
 
 ## How it works
 
