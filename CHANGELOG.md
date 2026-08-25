@@ -12,6 +12,12 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.2.1] – 2026-08-25
+
+### Fixed
+
+- Sign out revokes the Google grant instead of only clearing the token cache, so it actually signs you out.
+
 ## [1.2.0] – 2026-08-25
 
 ### Changed

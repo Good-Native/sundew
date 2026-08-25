@@ -245,7 +245,19 @@ els.signInButton.addEventListener("click", async () => {
   }
 });
 
-els.signOutButton.addEventListener("click", () => {
+els.signOutButton.addEventListener("click", async () => {
+  // Clearing Chrome's cache alone isn't enough — the Google-side grant
+  // survives and getAuthToken silently mints a fresh token. Revoke it.
+  try {
+    const token = await getToken(false);
+    await fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    await removeToken(token);
+  } catch (e) {
+    /* no live token to revoke */
+  }
   chrome.identity.clearAllCachedAuthTokens(() => {
     setAuthUI(false);
     setStatus("Signed out.", true);
