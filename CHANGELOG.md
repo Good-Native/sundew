@@ -12,6 +12,12 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.0.1] – 2026-08-25
+
+### Changed
+
+- The popup's destination line links to the configured spreadsheet.
+
 ## [1.0.0] – 2026-08-25
 
 ### Added

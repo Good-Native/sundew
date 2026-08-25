@@ -2,9 +2,23 @@ const destinationEl = document.getElementById("destination");
 const lastResultEl = document.getElementById("lastResult");
 
 async function render() {
-  const config = await chrome.storage.sync.get(["sheetName", "deviceLabel"]);
+  const config = await chrome.storage.sync.get([
+    "spreadsheetId",
+    "sheetName",
+    "deviceLabel",
+  ]);
   if (config.sheetName) {
-    destinationEl.textContent = `Tab: ${config.sheetName} (${config.deviceLabel || "Chrome"})`;
+    destinationEl.textContent = "";
+    const label = `Tab: ${config.sheetName} (${config.deviceLabel || "Chrome"})`;
+    if (config.spreadsheetId) {
+      const link = document.createElement("a");
+      link.href = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}`;
+      link.target = "_blank";
+      link.textContent = label;
+      destinationEl.appendChild(link);
+    } else {
+      destinationEl.textContent = label;
+    }
   }
 
   const { lastResult } = await chrome.storage.local.get("lastResult");
