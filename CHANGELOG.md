@@ -12,6 +12,17 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.2.0] – 2026-08-25
+
+### Changed
+
+- Options and popup use the wordmark instead of icon-plus-text.
+- Options page: amber background with white cards, headings inside cards.
+- Signed-in state shows "Signed in" with a sign-out button instead of the sign-in button.
+- Configured destination collapses to the linked sheet (opens it) plus a Change button revealing the full picker.
+- Popup shows "Sync to: <sheet> [<tab>]" and "Last: <time>, <n> rows"; spreadsheet name now stored with config.
+- Extension icons regenerated from re-exported tiles without background bleed.
+
 ## [1.1.1] – 2026-08-25
 
 ### Changed

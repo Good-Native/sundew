@@ -4,12 +4,12 @@ const lastResultEl = document.getElementById("lastResult");
 async function render() {
   const config = await chrome.storage.sync.get([
     "spreadsheetId",
+    "spreadsheetName",
     "sheetName",
-    "deviceLabel",
   ]);
   if (config.sheetName) {
-    destinationEl.textContent = "";
-    const label = `Tab: ${config.sheetName} (${config.deviceLabel || "Chrome"})`;
+    destinationEl.textContent = "Sync to: ";
+    const label = `${config.spreadsheetName || "sheet"} [${config.sheetName}]`;
     if (config.spreadsheetId) {
       const link = document.createElement("a");
       link.href = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}`;
@@ -17,7 +17,7 @@ async function render() {
       link.textContent = label;
       destinationEl.appendChild(link);
     } else {
-      destinationEl.textContent = label;
+      destinationEl.textContent += label;
     }
   }
 
@@ -29,7 +29,7 @@ async function render() {
   }
   const when = new Date(lastResult.at).toLocaleString();
   if (lastResult.ok) {
-    lastResultEl.textContent = `Last sync: ${when}\n${lastResult.rowsPushed} row(s) pushed.`;
+    lastResultEl.textContent = `Last: ${when}, ${lastResult.rowsPushed} rows`;
     lastResultEl.className = "ok";
   } else {
     lastResultEl.textContent = `Last attempt: ${when}\n${lastResult.error}`;

@@ -1,12 +1,18 @@
 const NEW_VALUE = "__new__";
 
-// Hosted Google Picker page (Cloudflare Pages) — see README.
+// Hosted Google Picker page (Cloudflare Workers) — see README.
 const PICKER_URL = "https://app.sundew.goodnative.co/";
 
 const els = {};
 for (const id of [
+  "signedOutView",
+  "signedInView",
   "signInButton",
-  "authState",
+  "signOutButton",
+  "destLinked",
+  "linkedSheetButton",
+  "changeDestButton",
+  "destEditor",
   "spreadsheetSelect",
   "browseDriveButton",
   "newSheetWrap",
@@ -37,15 +43,31 @@ function addOption(select, value, label) {
   select.appendChild(option);
 }
 
+function setAuthUI(signedIn) {
+  els.signedOutView.classList.toggle("hidden", signedIn);
+  els.signedInView.classList.toggle("hidden", !signedIn);
+}
+
 async function checkAuth() {
   try {
     await getToken(false);
-    els.authState.textContent = "Signed in";
+    setAuthUI(true);
     return true;
   } catch (e) {
-    els.authState.textContent = "Not signed in";
+    setAuthUI(false);
     return false;
   }
+}
+
+function showLinkedDestination(config) {
+  els.linkedSheetButton.textContent = `${config.spreadsheetName || "Sheet"} [${config.sheetName}]`;
+  els.destLinked.classList.remove("hidden");
+  els.destEditor.classList.add("hidden");
+}
+
+function showDestinationEditor() {
+  els.destLinked.classList.add("hidden");
+  els.destEditor.classList.remove("hidden");
 }
 
 async function loadSpreadsheets(selectId) {
@@ -148,13 +170,19 @@ async function save() {
     setStatus("Spreadsheet and tab are both required.", false);
     return;
   }
-  await chrome.storage.sync.set({
+  const selectedOption = [...els.spreadsheetSelect.options].find(
+    (o) => o.value === spreadsheetId,
+  );
+  const config = {
     spreadsheetId,
+    spreadsheetName: selectedOption?.textContent || "",
     sheetName,
     deviceLabel: els.deviceLabel.value.trim() || "Chrome",
     intervalMinutes: Number(els.intervalSelect.value),
-  });
+  };
+  await chrome.storage.sync.set(config);
   await chrome.runtime.sendMessage({ type: "rescheduleAlarm" });
+  showLinkedDestination(config);
   setStatus("Saved.", true);
 }
 
@@ -171,6 +199,8 @@ async function syncNow() {
 async function restore() {
   const config = await chrome.storage.sync.get([
     "spreadsheetId",
+    "spreadsheetName",
+    "sheetName",
     "deviceLabel",
     "intervalMinutes",
   ]);
@@ -180,7 +210,23 @@ async function restore() {
   }
 
   const signedIn = await checkAuth();
-  if (signedIn) {
+  const configured = config.spreadsheetId && config.sheetName;
+
+  if (configured) {
+    // Backfill the display name for configs saved before it was stored.
+    if (!config.spreadsheetName && signedIn) {
+      try {
+        const meta = await getSpreadsheetMeta(config.spreadsheetId);
+        config.spreadsheetName = meta.properties.title;
+        await chrome.storage.sync.set({
+          spreadsheetName: config.spreadsheetName,
+        });
+      } catch (e) {
+        /* leave blank; editor still works */
+      }
+    }
+    showLinkedDestination(config);
+  } else if (signedIn) {
     await loadSpreadsheets(config.spreadsheetId);
   }
 }
@@ -188,14 +234,39 @@ async function restore() {
 els.signInButton.addEventListener("click", async () => {
   try {
     await getToken(true);
-    await checkAuth();
+    setAuthUI(true);
     const { spreadsheetId } = await chrome.storage.sync.get("spreadsheetId");
-    await loadSpreadsheets(spreadsheetId);
+    if (!els.destEditor.classList.contains("hidden")) {
+      await loadSpreadsheets(spreadsheetId);
+    }
     setStatus("Signed in.", true);
   } catch (err) {
     setStatus(`Sign-in failed: ${err.message}`, false);
   }
 });
+
+els.signOutButton.addEventListener("click", () => {
+  chrome.identity.clearAllCachedAuthTokens(() => {
+    setAuthUI(false);
+    setStatus("Signed out.", true);
+  });
+});
+
+els.linkedSheetButton.addEventListener("click", async () => {
+  const { spreadsheetId } = await chrome.storage.sync.get("spreadsheetId");
+  if (spreadsheetId) {
+    window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}`);
+  }
+});
+
+els.changeDestButton.addEventListener("click", async () => {
+  showDestinationEditor();
+  const { spreadsheetId } = await chrome.storage.sync.get("spreadsheetId");
+  if (await checkAuth()) {
+    await loadSpreadsheets(spreadsheetId);
+  }
+});
+
 async function browseDrive() {
   try {
     const token = await getToken(true);

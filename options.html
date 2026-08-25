@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="sundew.css" />
     <style>
       body {
+        background: var(--amber);
         max-width: 560px;
         margin: 32px auto;
         padding: 0 16px;
@@ -21,6 +22,18 @@
       .brand img {
         height: 32px;
       }
+      .card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .card h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--red);
+        margin: 0 0 10px;
+      }
       #status {
         margin-top: 12px;
         white-space: pre-line;
@@ -30,65 +43,93 @@
         margin-top: 6px;
       }
       #authState {
-        margin-left: 10px;
+        margin-right: 10px;
+      }
+      #linkedSheetButton {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     </style>
   </head>
   <body>
     <div class="brand">
-      <img src="icons/icon.svg" alt="" />
-      <h1>sundew</h1>
+      <img
+        src="icons/wordmark-on-amber.svg"
+        alt="sundew"
+        style="height: 40px"
+      />
     </div>
 
-    <fieldset>
-      <legend>Google account</legend>
-      <button id="signInButton" class="primary">Sign in with Google</button>
-      <span id="authState" class="hint"></span>
-    </fieldset>
-
-    <fieldset>
-      <legend>Destination</legend>
-      <label for="spreadsheetSelect">Spreadsheet</label>
-      <div class="row">
-        <div>
-          <select id="spreadsheetSelect" disabled>
-            <option value="">Sign in first</option>
-          </select>
-        </div>
-        <button id="browseDriveButton">Browse Drive…</button>
+    <section class="card">
+      <h2>Google account</h2>
+      <div id="signedOutView">
+        <button id="signInButton" class="primary">Sign in with Google</button>
       </div>
-      <span class="hint"
-        >The list shows spreadsheets already connected to this extension. Use
-        Browse Drive to connect any other sheet you have access to.</span
-      >
-
-      <div id="newSheetWrap" class="row hidden">
-        <div>
-          <label for="newSheetName">New spreadsheet name</label>
-          <input type="text" id="newSheetName" placeholder="Browser History" />
-        </div>
-        <button id="createSheetButton">Create</button>
+      <div id="signedInView" class="hidden">
+        <span id="authState" class="hint">Signed in</span>
+        <button id="signOutButton">Sign out</button>
       </div>
-      <a id="openSheetLink" target="_blank" class="hidden"
-        >Open in Google Sheets ↗</a
-      >
+    </section>
 
-      <div class="row">
-        <div>
-          <label for="tabSelect">Tab</label>
-          <select id="tabSelect" disabled>
-            <option value="">Select a spreadsheet first</option>
-          </select>
-        </div>
-        <div id="newTabWrap" class="hidden">
-          <label for="newTabName">New tab name</label>
-          <input type="text" id="newTabName" placeholder="browser history" />
+    <section class="card">
+      <h2>Destination</h2>
+
+      <div id="destLinked" class="hidden">
+        <div class="row">
+          <button id="linkedSheetButton" title="Open in Google Sheets"></button>
+          <button id="changeDestButton">Change</button>
         </div>
       </div>
-    </fieldset>
 
-    <fieldset>
-      <legend>This device</legend>
+      <div id="destEditor">
+        <label for="spreadsheetSelect">Spreadsheet</label>
+        <div class="row">
+          <div>
+            <select id="spreadsheetSelect" disabled>
+              <option value="">Sign in first</option>
+            </select>
+          </div>
+          <button id="browseDriveButton">Browse Drive…</button>
+        </div>
+        <span class="hint"
+          >The list shows spreadsheets already connected to this extension. Use
+          Browse Drive to connect any other sheet you have access to.</span
+        >
+
+        <div id="newSheetWrap" class="row hidden">
+          <div>
+            <label for="newSheetName">New spreadsheet name</label>
+            <input
+              type="text"
+              id="newSheetName"
+              placeholder="Browser History"
+            />
+          </div>
+          <button id="createSheetButton">Create</button>
+        </div>
+        <a id="openSheetLink" target="_blank" class="hidden"
+          >Open in Google Sheets ↗</a
+        >
+
+        <div class="row">
+          <div>
+            <label for="tabSelect">Tab</label>
+            <select id="tabSelect" disabled>
+              <option value="">Select a spreadsheet first</option>
+            </select>
+          </div>
+          <div id="newTabWrap" class="hidden">
+            <label for="newTabName">New tab name</label>
+            <input type="text" id="newTabName" placeholder="browser history" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>This device</h2>
       <label for="deviceLabel">Device label (written to each row)</label>
       <input type="text" id="deviceLabel" placeholder="e.g. MacBook, Work PC" />
 
@@ -98,7 +139,7 @@
         <option value="60" selected>Every hour</option>
         <option value="120">Every 2 hours</option>
       </select>
-    </fieldset>
+    </section>
 
     <button id="saveButton" class="primary">Save</button>
     <button id="syncNowButton">Sync now</button>
