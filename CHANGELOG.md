@@ -12,6 +12,12 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.2.2] – 2026-08-25
+
+### Changed
+
+- Status messages on the options page are proper toasts (bottom-centre, auto-dismiss); Save and Sync now sit in their own card.
+
 ## [1.2.1] – 2026-08-25
 
 ### Fixed

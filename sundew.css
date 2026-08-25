@@ -145,6 +145,42 @@ a:hover {
   display: inline-block;
 }
 
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 16px);
+  background: var(--red);
+  color: var(--white);
+  font-weight: 500;
+  border-radius: 100px;
+  padding: 10px 20px;
+  box-shadow: 0 4px 12px rgba(40, 4, 7, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  max-width: 90vw;
+  white-space: pre-line;
+  text-align: center;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+#toast.toast-error {
+  background: var(--amber);
+  color: var(--red);
+}
+
 .hidden {
   display: none;
 }

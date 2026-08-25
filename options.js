@@ -26,14 +26,24 @@ for (const id of [
   "intervalSelect",
   "saveButton",
   "syncNowButton",
-  "status",
+  "toast",
 ]) {
   els[id] = document.getElementById(id);
 }
 
+let toastTimer;
 function setStatus(message, ok) {
-  els.status.textContent = message;
-  els.status.className = ok === undefined ? "" : ok ? "ok" : "error";
+  clearTimeout(toastTimer);
+  if (!message) {
+    els.toast.classList.remove("show");
+    return;
+  }
+  els.toast.textContent = message;
+  els.toast.className = ok === false ? "toast-error show" : "show";
+  // Progress messages (ok undefined) stay until replaced or cleared.
+  if (ok !== undefined) {
+    toastTimer = setTimeout(() => els.toast.classList.remove("show"), 3500);
+  }
 }
 
 function addOption(select, value, label) {
