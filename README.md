@@ -1,4 +1,4 @@
-# Sundew
+<img src="assets/sundew-main.svg" alt="Sundew" height="48">
 
 Chrome extension that pushes browsing history to a Google Sheet on a schedule (default hourly). Each device configures its own spreadsheet, tab, and device label, so multiple machines can share one sheet (different tabs or a device column) or use separate sheets entirely.
 
@@ -7,6 +7,10 @@ Chrome extension that pushes browsing history to a Google Sheet on a schedule (d
 Sundews (_Drosera_) are Australian native carnivorous plants that passively and continuously capture whatever lands on them — no chasing, no effort, just quiet accumulation. That's this app: it sits in the background and captures your browsing trail as it happens, rather than requiring a manual export.
 
 Follows the Good Native convention of Australian native flora/fauna with a functional nod — alongside [mopoke](https://github.com/Good-Native/mopoke) (the owl that watches DNS), [currawong](https://github.com/Good-Native/currawong) (GTM sync), [paperbark](https://github.com/Good-Native/paperbark) (log capture), and [hover](https://github.com/Good-Native/hover) (link checking).
+
+## Brand
+
+Colours: red `#990B27`, amber `#F6A605`, dark `#280407`. Source assets (wordmarks, lockup, icon tiles) live in [`assets/`](assets/); the extension icon set in [`icons/`](icons/) is generated from `assets/icon-red-on-yellow@2x.png`. Shared UI tokens (Chrome-native styling + brand accents, light/dark) are in [`sundew.css`](sundew.css).
 
 ## How it works
 

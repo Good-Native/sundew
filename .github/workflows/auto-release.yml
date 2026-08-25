@@ -184,7 +184,9 @@ jobs:
           # repo metadata has no place in a packed extension.
           zip "sundew-$NEW_VERSION.zip" \
             manifest.json background.js sheets.js \
-            options.html options.js popup.html popup.js
+            options.html options.js popup.html popup.js \
+            sundew.css icons/icon.svg \
+            icons/icon-16.png icons/icon-32.png icons/icon-48.png icons/icon-128.png
 
       - name: Extract changelog content
         if: steps.check.outputs.should_release == 'true' &&

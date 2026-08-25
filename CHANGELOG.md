@@ -12,6 +12,18 @@ On merge into `main`, `.github/workflows/auto-release.yml` collates every pendin
 
 ## Full changelog history
 
+## [1.1.0] – 2026-08-25
+
+### Added
+
+- Brand assets (`assets/`), extension icon set (`icons/`), and manifest icons — no more grey placeholder in the toolbar.
+- Shared `sundew.css`: Chrome-native styling (system font, Google greys, pill buttons, dark mode) with the red/amber brand as accent, applied to the popup, options, and picker pages.
+
+### Changed
+
+- Popup and options pages restyled with the Sundew brand header.
+- Picker page carries the brand, a favicon, and dark-mode support.
+
 ## [1.0.1] – 2026-08-25
 
 ### Changed
