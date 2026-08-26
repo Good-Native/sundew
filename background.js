@@ -11,10 +11,14 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 chrome.runtime.onStartup.addListener(scheduleAlarm);
 
-// Alarms usually outlive a browser restart but Chrome doesn't guarantee it, so
-// re-assert on every service worker start.
-chrome.alarms.get(ALARM_NAME).then((alarm) => {
-  if (!alarm) scheduleAlarm();
+// Alarms usually outlive a browser restart but Chrome doesn't guarantee it, and
+// a Save whose rescheduleAlarm message never reached the worker leaves a stale
+// period behind. Re-assert on every service worker start so the schedule
+// converges on the stored interval either way.
+chrome.alarms.get(ALARM_NAME).then(async (alarm) => {
+  const { intervalMinutes } = await getDeviceSettings();
+  if (!alarm || alarm.periodInMinutes !== intervalMinutes)
+    await scheduleAlarm();
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {

@@ -194,7 +194,11 @@ async function save() {
     deviceLabel: els.deviceLabel.value.trim() || (await defaultDeviceLabel()),
     intervalMinutes: Number(els.intervalSelect.value),
   });
-  await chrome.runtime.sendMessage({ type: "rescheduleAlarm" });
+  try {
+    await chrome.runtime.sendMessage({ type: "rescheduleAlarm" });
+  } catch (e) {
+    /* worker asleep; the next worker start re-asserts the alarm */
+  }
   showLinkedDestination(config);
   setStatus("Saved.", true);
 }

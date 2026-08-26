@@ -19,8 +19,10 @@ bump: minor
 - The Options page no longer hangs on "Syncing…" when the service worker dies
   mid-sync.
 - The alarm is re-asserted whenever the service worker starts, not only on
-  install and browser startup — Chrome does not guarantee alarms survive a
-  restart.
+  install and browser startup. Chrome does not guarantee alarms survive a
+  restart, and a Save whose reschedule message never reached the worker used to
+  leave the old interval running; the schedule now converges on the stored
+  interval either way.
 
 ### Changed
 
