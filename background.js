@@ -95,19 +95,23 @@ async function syncNow() {
   const rows = (state.pendingRows || []).concat(
     visits.map((v) => visitToRow(v, deviceLabel)),
   );
-  // Only has to cover the OVERLAP_MS rescan, since the window always advances
-  // past everything collected — so the cap is a backstop, not a working limit.
+  // Newest first, so a run larger than MAX_SEEN_IDS keeps the ids the next
+  // OVERLAP_MS rescan will meet. collectVisits sorts ascending, so without the
+  // reverse the cap would drop exactly those and re-collect them.
   const seenIds = visits
     .map((v) => v.visitId)
+    .reverse()
     .concat(state.seenVisitIds || [])
     .slice(0, MAX_SEEN_IDS);
 
+  let appended = false;
   try {
     if (rows.length > 0) {
       await ensureSheetTab(config.spreadsheetId, config.sheetName);
       await ensureHeader(config.spreadsheetId, config.sheetName);
       await appendRows(config.spreadsheetId, config.sheetName, rows);
     }
+    appended = true;
     await chrome.storage.local.set({
       lastSyncTime: now,
       seenVisitIds: seenIds,
@@ -123,7 +127,9 @@ async function syncNow() {
     await chrome.storage.local.set({
       lastSyncTime: now,
       seenVisitIds: seenIds,
-      pendingRows: err.remainingRows ?? rows,
+      // Reached here with the append done means the storage write failed, not
+      // the push — queueing these rows would send the sheet a second copy.
+      pendingRows: appended ? [] : (err.remainingRows ?? rows),
     });
     return recordResult({ ok: false, error: err.message });
   }
