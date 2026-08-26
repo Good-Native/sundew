@@ -23,27 +23,28 @@ async function reconcileAlarm() {
   }
 }
 
-reconcileAlarm().catch(async (err) => {
-  // The next worker start retries; surface it in the meantime.
+// recordResult writes to storage, so reporting a storage failure can itself
+// fail. Swallow that rather than trading one unhandled rejection for another.
+async function reportFailure(err) {
   try {
-    await recordResult({
-      ok: false,
-      error: `Could not schedule sync: ${err.message}`,
-    });
+    return await recordResult({ ok: false, error: err.message });
   } catch (e) {
     /* storage unavailable too, so there is nothing left to report with */
   }
-});
+}
+
+// The next worker start retries; surface it in the meantime.
+reconcileAlarm().catch((err) =>
+  reportFailure(new Error(`Could not schedule sync: ${err.message}`)),
+);
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ALARM_NAME) syncNow();
+  if (alarm.name === ALARM_NAME) syncNow().catch(reportFailure);
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "syncNow") {
-    syncNow()
-      .catch((err) => recordResult({ ok: false, error: err.message }))
-      .then(sendResponse);
+    syncNow().catch(reportFailure).then(sendResponse);
     return true;
   }
   if (msg.type === "rescheduleAlarm") {
@@ -81,36 +82,48 @@ async function syncNow() {
     : now - FIRST_SYNC_BACKFILL_MS;
   const seen = new Set(state.seenVisitIds || []);
 
-  let rows = state.pendingRows || [];
-  let visits = [];
+  // Collect before pushing, and keep the two failures apart. Until collection
+  // succeeds the window must not move, or the visits it would have found are
+  // never scanned again.
+  let visits;
   try {
     visits = await collectVisits(since, seen);
-    rows = rows.concat(visits.map((v) => visitToRow(v, deviceLabel)));
+  } catch (err) {
+    return recordResult({ ok: false, error: err.message });
+  }
 
+  const rows = (state.pendingRows || []).concat(
+    visits.map((v) => visitToRow(v, deviceLabel)),
+  );
+  // Only has to cover the OVERLAP_MS rescan, since the window always advances
+  // past everything collected — so the cap is a backstop, not a working limit.
+  const seenIds = visits
+    .map((v) => v.visitId)
+    .concat(state.seenVisitIds || [])
+    .slice(0, MAX_SEEN_IDS);
+
+  try {
     if (rows.length > 0) {
       await ensureSheetTab(config.spreadsheetId, config.sheetName);
       await ensureHeader(config.spreadsheetId, config.sheetName);
       await appendRows(config.spreadsheetId, config.sheetName, rows);
     }
-
-    const seenIds = visits
-      .map((v) => v.visitId)
-      .concat(state.seenVisitIds || []);
     await chrome.storage.local.set({
       lastSyncTime: now,
-      seenVisitIds: seenIds.slice(0, MAX_SEEN_IDS),
+      seenVisitIds: seenIds,
       pendingRows: [],
     });
     return recordResult({ ok: true, rowsPushed: rows.length });
   } catch (err) {
-    // Queue unappended rows for the next run. Collected visits are marked
-    // seen so the retry doesn't re-collect them on top of the queue.
-    const seenIds = visits
-      .map((v) => v.visitId)
-      .concat(state.seenVisitIds || []);
+    // Every collected visit is now either in the sheet or queued below, so the
+    // window advances even though the push failed. Freezing it instead would
+    // rescan an ever-growing span, and once seenVisitIds filled, its oldest
+    // entries would drop while still inside that span — re-queueing rows the
+    // queue already holds, once more per run.
     await chrome.storage.local.set({
+      lastSyncTime: now,
+      seenVisitIds: seenIds,
       pendingRows: err.remainingRows ?? rows,
-      seenVisitIds: seenIds.slice(0, MAX_SEEN_IDS),
     });
     return recordResult({ ok: false, error: err.message });
   }
