@@ -13,12 +13,26 @@ chrome.runtime.onStartup.addListener(scheduleAlarm);
 
 // Alarms usually outlive a browser restart but Chrome doesn't guarantee it, and
 // a Save whose rescheduleAlarm message never reached the worker leaves a stale
-// period behind. Re-assert on every service worker start so the schedule
+// period behind. Reconcile on every service worker start so the schedule
 // converges on the stored interval either way.
-chrome.alarms.get(ALARM_NAME).then(async (alarm) => {
+async function reconcileAlarm() {
+  const alarm = await chrome.alarms.get(ALARM_NAME);
   const { intervalMinutes } = await getDeviceSettings();
-  if (!alarm || alarm.periodInMinutes !== intervalMinutes)
+  if (!alarm || alarm.periodInMinutes !== intervalMinutes) {
     await scheduleAlarm();
+  }
+}
+
+reconcileAlarm().catch(async (err) => {
+  // The next worker start retries; surface it in the meantime.
+  try {
+    await recordResult({
+      ok: false,
+      error: `Could not schedule sync: ${err.message}`,
+    });
+  } catch (e) {
+    /* storage unavailable too, so there is nothing left to report with */
+  }
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
