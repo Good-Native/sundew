@@ -24,7 +24,13 @@ bump: minor
   leave the old interval running; the schedule now converges on the stored
   interval either way.
 
+- `device.js` is packed into the release zip. Without it the published
+  extension's service worker fails to start, since `background.js` imports it.
+
 ### Changed
+
+- `minimum_chrome_version` is set to 115, the release that introduced
+  `VisitItem.isLocal`. The synced-visit filter depends on it.
 
 - `Local Visit` is now always TRUE, since synced-in visits never reach the
   sheet. The column stays for column-order stability.

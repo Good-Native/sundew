@@ -3,12 +3,8 @@
   "name": "Sundew",
   "version": "1.3.0",
   "description": "Quietly captures Chrome browsing history into a Google Sheet on an hourly schedule.",
-  "permissions": [
-    "history",
-    "alarms",
-    "storage",
-    "identity"
-  ],
+  "minimum_chrome_version": "115",
+  "permissions": ["history", "alarms", "storage", "identity"],
   "host_permissions": [
     "https://sheets.googleapis.com/",
     "https://www.googleapis.com/",
@@ -33,9 +29,7 @@
   },
   "oauth2": {
     "client_id": "26449713823-nft3oeojt7g2i6pledo0c4t453v7g5ef.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/drive.file"
-    ]
+    "scopes": ["https://www.googleapis.com/auth/drive.file"]
   },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsdpfZVaWF4Q67wWUDxKFR+cHiN6p8NOoAI8M4aWD4Sg7yBd/hVzs4ONvwupVK9qVglB+7w0n50mBTmwLQfgNMP6UAerWSRUACqhnAnn36UwXBHtnnaCDvT6Y7Yw++gDXrNUedTwB8MOo8JptsRqRk5hwvUqxEEUta7fJzxJ8THbh68o21Elc08zPDFsUGP88pB7zF4A+nBWWYhgrzXy6qshQRAn7FEODu3B2hXAhG00AjXOMs8WLGHSNIjAwmzu1dhwaRqH6uiqEOBRBzBDdsPiCpWPaVZNjYXn88qpsA+89B4D+WN2uyIVWNVndSXBsSICVWd7e+yizXgxrmDuogQIDAQAB"
 }

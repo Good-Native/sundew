@@ -129,8 +129,8 @@ async function collectVisits(since, seen) {
     for (const visit of visitItems) {
       // Chrome Sync copies other machines' visits into this profile's history
       // and isLocal is false for those. Without this each machine re-uploads
-      // every other machine's browsing. Strict compare: isLocal is undefined
-      // before Chrome 115, where there are no synced visits to exclude.
+      // every other machine's browsing. isLocal landed in Chrome 115, which
+      // manifest.json requires as the minimum version.
       if (visit.isLocal === false) continue;
       if (visit.visitTime >= since && !seen.has(visit.visitId)) {
         visits.push({

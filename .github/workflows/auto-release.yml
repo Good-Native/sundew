@@ -183,7 +183,7 @@ jobs:
           # Extension files only — the picker page deploys separately and
           # repo metadata has no place in a packed extension.
           zip "sundew-$NEW_VERSION.zip" \
-            manifest.json background.js sheets.js \
+            manifest.json background.js sheets.js device.js \
             options.html options.js popup.html popup.js \
             sundew.css icons/icon.svg icons/wordmark.svg icons/wordmark-on-amber.svg \
             icons/wordmark-yellow-on-red.svg fonts/inter-400-latin.woff2 fonts/inter-500-latin.woff2 fonts/inter-600-latin.woff2 fonts/inter-700-latin.woff2 \
