@@ -45,6 +45,10 @@
       #authState {
         margin-right: 10px;
       }
+      #lastResult {
+        margin-top: 12px;
+        white-space: pre-line;
+      }
       #linkedSheetButton {
         max-width: 100%;
         overflow: hidden;
@@ -132,6 +136,10 @@
       <h2>This device</h2>
       <label for="deviceLabel">Device label (written to each row)</label>
       <input type="text" id="deviceLabel" placeholder="e.g. MacBook, Work PC" />
+      <span class="hint"
+        >These two settings are stored on this machine only, so each device
+        keeps its own label and interval.</span
+      >
 
       <label for="intervalSelect">Sync interval</label>
       <select id="intervalSelect">
@@ -141,14 +149,18 @@
       </select>
     </section>
 
-    <section class="card actions">
-      <button id="saveButton" class="primary">Save</button>
-      <button id="syncNowButton">Sync now</button>
+    <section class="card">
+      <div class="actions">
+        <button id="saveButton" class="primary">Save</button>
+        <button id="syncNowButton">Sync now</button>
+      </div>
+      <div id="lastResult" class="hint"></div>
     </section>
 
     <div id="toast" role="status"></div>
 
     <script src="sheets.js"></script>
+    <script src="device.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

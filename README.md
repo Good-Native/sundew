@@ -1,6 +1,6 @@
 <img src="assets/sundew-main.svg" alt="Sundew" height="48">
 
-Chrome extension that pushes browsing history to a Google Sheet on a schedule (default hourly). Each device configures its own spreadsheet, tab, and device label, so multiple machines can share one sheet (different tabs or a device column) or use separate sheets entirely.
+Chrome extension that pushes browsing history to a Google Sheet on a schedule (default hourly). Several machines on the same Chrome profile share one destination and each stamps its own device label, so one sheet holds the lot with a column to tell them apart.
 
 ## The name
 
@@ -16,12 +16,15 @@ Colours: red `#990B27`, amber `#F6A605`, dark `#280407`. Source assets (wordmark
 
 - `chrome.alarms` fires on the chosen interval (30/60/120 min) and 1 minute after Chrome starts.
 - Each run collects only visits since the last successful sync (first run backfills 24 hours), deduplicated by visit ID with a 5-minute overlap window so nothing is missed at the boundary.
+- Only visits that happened _on this machine_ are collected. Chrome Sync copies visits between machines on the same profile, so without that filter every device would re-upload every other device's browsing.
 - Rows are appended to the configured tab via the Google Sheets API (`values:append`). The tab and header row are created automatically if missing.
 - If a push fails (offline, token expired), rows are queued locally and flushed on the next run without duplication.
 - Auth uses the non-sensitive `drive.file` scope, so no Google app verification is needed and users in any org can sign in without warnings. The extension can touch spreadsheets it created **or** ones the user explicitly picks: **Browse Drive…** in Options opens a small hosted Google Picker page, and picking a file grants the extension access to just that file.
 - The Picker can't run inside an MV3 extension page (remote-script CSP), which is why it lives on a tiny static Cloudflare Pages site (`picker/index.html`). The extension passes its OAuth token to the page via URL fragment; the page posts the picked file's id/name back via `postMessage` and closes.
 
-Columns: `Timestamp (ISO), Date, Time, Page Title, URL, Visit Type, Visit ID, Total Visits, Typed Count, Device, Referred By (Visit ID), Local Visit`. That is every field Chrome's history API exposes per visit; `Referred By` chains visits into navigation trails, and `Local Visit` is FALSE for visits synced into Chrome from another device. Header renames rewrite row 1 in place on next sync; column order never changes.
+Columns: `Timestamp (ISO), Date, Time, Page Title, URL, Visit Type, Visit ID, Total Visits, Typed Count, Device, Referred By (Visit ID), Local Visit`. That is every field Chrome's history API exposes per visit; `Referred By` chains visits into navigation trails. `Local Visit` is now always TRUE (synced-in visits are filtered out before the sheet) and is kept only so column order never changes — historic FALSE rows predate that filter. Header renames rewrite row 1 in place on next sync.
+
+`Visit ID` is Chrome's local database row ID. It is unique **within** a device and meaningless across devices, so never join two machines' rows on it — the same number refers to different visits on each machine. `Total Visits` and `Typed Count` are Chrome's own per-URL counters and include visits synced in from other devices.
 
 ## Setup
 
@@ -69,7 +72,12 @@ openssl rsa -in key.pem -pubout -outform DER | base64
 
 Put the base64 output in `manifest.json` as `"key": "<base64>"`, reload, and register that (now stable) extension ID in the OAuth client. Keep `key.pem` out of any public repo.
 
-Then on each device: load the same folder, sign in, and pick that device's sheet/tab in Options. Config is stored in `chrome.storage.sync` per Chrome profile, so profiles that sync with each other share settings — use separate device labels or profiles if you want distinct tabs per machine.
+Then on each device: load the same folder and sign in. Settings split in two:
+
+- **Destination** (spreadsheet, tab) lives in `chrome.storage.sync`, so Chrome Sync shares it across every machine on the profile. Configure it once.
+- **Device label and interval** live in `chrome.storage.local`, so they are genuinely per-machine. Each device defaults its label to its platform (`Mac`, `Windows`, `Linux`) and you can rename it in Options without touching the others.
+
+To send machines to different tabs or different spreadsheets entirely, use separate Chrome profiles — one synced profile has one destination by design.
 
 ## Notes
 

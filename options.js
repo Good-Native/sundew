@@ -26,6 +26,7 @@ for (const id of [
   "intervalSelect",
   "saveButton",
   "syncNowButton",
+  "lastResult",
   "toast",
 ]) {
   els[id] = document.getElementById(id);
@@ -187,10 +188,12 @@ async function save() {
     spreadsheetId,
     spreadsheetName: selectedOption?.textContent || "",
     sheetName,
-    deviceLabel: els.deviceLabel.value.trim() || "Chrome",
-    intervalMinutes: Number(els.intervalSelect.value),
   };
   await chrome.storage.sync.set(config);
+  await setDeviceSettings({
+    deviceLabel: els.deviceLabel.value.trim() || (await defaultDeviceLabel()),
+    intervalMinutes: Number(els.intervalSelect.value),
+  });
   await chrome.runtime.sendMessage({ type: "rescheduleAlarm" });
   showLinkedDestination(config);
   setStatus("Saved.", true);
@@ -198,11 +201,35 @@ async function save() {
 
 async function syncNow() {
   setStatus("Syncing…");
-  const result = await chrome.runtime.sendMessage({ type: "syncNow" });
+  let result;
+  try {
+    result = await chrome.runtime.sendMessage({ type: "syncNow" });
+  } catch (err) {
+    // The worker died mid-sync; without this the toast hangs on "Syncing…".
+    result = { ok: false, error: err.message };
+  }
   if (result?.ok) {
     setStatus(`Synced — ${result.rowsPushed} row(s) pushed.`, true);
   } else {
     setStatus(`Sync failed: ${result?.error || "unknown error"}`, false);
+  }
+  await showLastResult();
+}
+
+async function showLastResult() {
+  const { lastResult } = await chrome.storage.local.get("lastResult");
+  if (!lastResult) {
+    els.lastResult.textContent = "No sync yet.";
+    els.lastResult.className = "hint";
+    return;
+  }
+  const when = new Date(lastResult.at).toLocaleString();
+  if (lastResult.ok) {
+    els.lastResult.textContent = `Last sync ${when} — ${lastResult.rowsPushed} row(s).`;
+    els.lastResult.className = "hint";
+  } else {
+    els.lastResult.textContent = `Last attempt ${when}\n${lastResult.error}`;
+    els.lastResult.className = "error";
   }
 }
 
@@ -211,13 +238,11 @@ async function restore() {
     "spreadsheetId",
     "spreadsheetName",
     "sheetName",
-    "deviceLabel",
-    "intervalMinutes",
   ]);
-  if (config.deviceLabel) els.deviceLabel.value = config.deviceLabel;
-  if (config.intervalMinutes) {
-    els.intervalSelect.value = String(config.intervalMinutes);
-  }
+  const device = await getDeviceSettings();
+  els.deviceLabel.value = device.deviceLabel;
+  els.intervalSelect.value = String(device.intervalMinutes);
+  await showLastResult();
 
   const signedIn = await checkAuth();
   const configured = config.spreadsheetId && config.sheetName;
